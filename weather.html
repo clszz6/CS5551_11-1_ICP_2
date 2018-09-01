@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="en" ng-app="WeatherApplication">
+<head>
+    <meta t="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script src="https://ajax.googleapis.com/ajax/libs/angularjs/1.6.9/angular.min.js" type="application/javascript"></script>
+    <script src="https://ajax.googleapis.com/ajax/libs/angularjs/1.6.9/angular-sanitize.js"></script>
+    <meta charset="UTF-8">
+    <title>Weather Forecast</title>
+
+    <link rel="stylesheet" href="./bootstrap-3.3.7-dist/css/bootstrap.css">
+    <style>
+    h1 {
+        text-align:center;
+    }
+
+    .weather-forecast {
+        background: #ececec;
+        width: 200px;
+        padding: 1.5em;
+        margin-left: 20px;
+        border: 1px black solid;
+        border-radius: 5px;
+        display: table;
+        margin-right: auto;
+        margin-left: auto;
+    }
+
+    .weather-form {
+        display: table;
+        margin-right: auto;
+        margin-left: auto;
+    }
+    </style>
+    
+    <script>
+        var app = angular.module('WeatherApplication', ['ngSanitize']);
+        app.controller('WeatherController', function ($scope, $http) {
+            $scope.submition = function (state, city) {
+                const url = 'http://api.wunderground.com/api/4bbbc25f4f5946dd/hourly/q/' + state + '/' + city + '.json';
+
+                $http.get(url)
+                .then(function(response) {
+                    angular.element(document.querySelector("#weatherDisplay")).addClass("weather-forecast");
+
+                    let weatherForcast = {
+                        html: "<h2>" + city.replace(/^\w/, c => c.toUpperCase()) + ", " + state.toUpperCase() + "</h2><br/>"
+                    };
+
+                    for (let i = 0; i < 5; i++) {
+                        temp    = response.data.hourly_forecast[i].temp.english;
+                        icon    = response.data.hourly_forecast[i].icon_url;
+                        weather = response.data.hourly_forecast[i].condition;
+                        time    = response.data.hourly_forecast[i].FCTTIME.civil;
+
+                        if (i == 4) {
+                            weatherForcast.html +=  time + "<br/>" + temp + " &deg; F and " + weather + "<br/><img src='" + icon + "'/>"
+                        }
+                        else {
+                            weatherForcast.html +=  time + "<br/>" + temp + " &deg; F and " + weather + "<br/><img src='" + icon + "'/><br/><br/>"
+                        }
+                    }
+                    $scope.futureWeather = weatherForcast;
+                })
+                .catch(function() {
+                    $scope.futureWeather = {
+                        html: "<h2>Error: " + city.replace(/^\w/, c => c.toUpperCase()) + ", " + state.toUpperCase() + " does not exist</h2>"
+                    }
+                })
+            }
+        });
+    </script>
+</head>
+
+<body>
+<div ng-app="WeatherApplication" ng-controller="WeatherController">
+    
+    <h1>5-Hour Weather Forecast</h1>
+    <hr/><br/>
+    <div class="weather-form">
+        <div class="form-group col-xs-5 col-lg-3">
+            <input class="form-control" placeholder="State" ng-model="state" maxlength="2" style="text-transform:uppercase" />
+        </div>
+        <div class="form-group col-xs-5 col-lg-5">
+            <input class="form-control" placeholder="City" ng-model="city" />
+        </div>
+        <input class="btn btn-primary" type="submit" ng-click="submition(state, city)" value="View Weather"></input>
+    </div>
+    <br/><br/>
+    <div id="weatherDisplay">
+        <p ng-bind-html="futureWeather.html"></p>
+    </div>
+</div>
+
+</body>
+</html>
